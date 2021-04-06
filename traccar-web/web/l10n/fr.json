@@ -446,8 +446,9 @@
     "categoryTruck": "Camion",
     "categoryVan": "Van",
     "categoryScooter": "Scooter",
-    "categoryVTU": "VTU",
-    "categoryVTP" : "VTP",
+    "categoryVtu": "VTU",
+    "categoryVtp" : "VTP",
+    "categoryVpsp" : "VPS",
     "maintenanceStart": "Départ",
     "maintenancePeriod": "Période"
 }
