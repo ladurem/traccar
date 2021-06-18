@@ -41,10 +41,9 @@ Ext.define('Traccar.view.dialog.Login', {
 
         items: [{
             xtype: 'image',
-            src: 'logo.svg',
+            src: 'logo_fnpc.png',
             alt: Strings.loginLogo,
             width: 240,
-            height: 64,
             style: {
                 display: 'block',
                 margin: '10px auto 25px'
@@ -102,10 +101,6 @@ Ext.define('Traccar.view.dialog.Login', {
     },
 
     buttons: [{
-        text: Strings.loginRegister,
-        handler: 'onRegisterClick',
-        reference: 'registerButton'
-    }, {
         text: Strings.loginLogin,
         handler: 'onLoginClick'
     }]
