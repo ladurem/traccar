@@ -37,6 +37,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
 
@@ -66,6 +67,7 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
             for (String value : entry.getValue()) {
                 switch (entry.getKey()) {
                     case "id":
+                    case "i":
                     case "deviceid":
                         DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, value);
                         if (deviceSession == null) {
@@ -74,28 +76,23 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                         }
                         position.setDeviceId(deviceSession.getDeviceId());
                         break;
+                    case "v":
+                        position.setValid(value.equalsIgnoreCase("A"));
+                        break;
                     case "valid":
                         position.setValid(Boolean.parseBoolean(value) || "1".equals(value));
                         break;
                     case "timestamp":
-                        try {
-                            long timestamp = Long.parseLong(value);
-                            if (timestamp < Integer.MAX_VALUE) {
-                                timestamp *= 1000;
-                            }
-                            position.setTime(new Date(timestamp));
-                        } catch (NumberFormatException error) {
-                            if (value.contains("T")) {
-                                position.setTime(DateUtil.parseDate(value));
-                            } else {
-                                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                                position.setTime(dateFormat.parse(value));
-                            }
-                        }
+                    case "d":
+                        DateFormat dateFormat = new SimpleDateFormat("ddMMyyHHmmss");
+                        dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                        position.setTime(dateFormat.parse(value));
                         break;
+                    case "la":
                     case "lat":
                         latitude = Double.parseDouble(value);
                         break;
+                    case "lo":
                     case "lon":
                         longitude = Double.parseDouble(value);
                         break;
@@ -122,18 +119,23 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                                 wifi[0].replace('-', ':'), Integer.parseInt(wifi[1])));
                         break;
                     case "speed":
+                    case "s":
                         position.setSpeed(convertSpeed(Double.parseDouble(value), "kn"));
                         break;
                     case "bearing":
                     case "heading":
                         position.setCourse(Double.parseDouble(value));
                         break;
+                    case "al":
                     case "altitude":
                         position.setAltitude(Double.parseDouble(value));
                         break;
+                    case "p":
+                    case "prec":
                     case "accuracy":
                         position.setAccuracy(Double.parseDouble(value));
                         break;
+                    case "h":
                     case "hdop":
                         position.set(Position.KEY_HDOP, Double.parseDouble(value));
                         break;
@@ -145,6 +147,14 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                         break;
                     case "charge":
                         position.set(Position.KEY_CHARGE, Boolean.parseBoolean(value));
+                        break;
+                    case "in":
+                    case "input":
+                        position.set(Position.KEY_INPUT, value);
+                        break;
+                    case "sa":
+                    case "sat":
+                        position.set(Position.KEY_SATELLITES, value);
                         break;
                     default:
                         try {
