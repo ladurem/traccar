@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 - 2024 Anton Tananaev (anton@traccar.org)
+ * Copyright 2019 - 2025 Anton Tananaev (anton@traccar.org)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -171,6 +171,13 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Frame mask for Atrack protocol.
+     */
+    public static final ConfigSuffix<Integer> PROTOCOL_FRAME_MASK = new IntegerConfigSuffix(
+            ".frameMask",
+            List.of(KeyType.CONFIG));
+
+    /**
      * Protocol configuration. Required for some devices for decoding incoming data.
      */
     public static final ConfigSuffix<String> PROTOCOL_CONFIG = new StringConfigSuffix(
@@ -277,6 +284,14 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Minimum accuracy to include. If the value is lower, it will be set to zero.
+     */
+    public static final ConfigKey<Double> OSMAND_MIN_ACCURACY = new DoubleConfigKey(
+            "osmand.minAccuracy",
+            List.of(KeyType.CONFIG),
+            10.0);
+
+    /**
      * Use alternative format for the protocol of commands.
      */
     public static final ConfigSuffix<Boolean> PROTOCOL_ALTERNATIVE = new BooleanConfigSuffix(
@@ -298,7 +313,8 @@ public final class Keys {
      */
     public static final ConfigKey<Long> SERVER_BUFFERING_THRESHOLD = new LongConfigKey(
             "server.buffering.threshold",
-            List.of(KeyType.CONFIG));
+            List.of(KeyType.CONFIG),
+            3000L);
 
     /**
      * Server wide connection timeout value in seconds. See protocol timeout for more information.
@@ -310,9 +326,25 @@ public final class Keys {
     /**
      * Send device responses immediately before writing it in the database.
      */
-    public static final ConfigKey<Boolean> SERVER_INSTANT_ACKNOWLEDGEMENT = new BooleanConfigKey(
-            "server.instantAcknowledgement",
+    public static final ConfigKey<Boolean> SERVER_DELAY_ACKNOWLEDGEMENT = new BooleanConfigKey(
+            "server.delayAcknowledgement",
             List.of(KeyType.CONFIG));
+
+    /**
+     * Number of Netty boss threads. If not specified or zero, Netty default value is used.
+     */
+    public static final ConfigKey<Integer> SERVER_NETTY_BOSS_THREADS = new IntegerConfigKey(
+            "server.nettyBossThreads",
+            List.of(KeyType.CONFIG),
+            0);
+
+    /**
+     * Number of Netty worker threads. If not specified or zero, Netty default value is used.
+     */
+    public static final ConfigKey<Integer> SERVER_NETTY_WORKER_THREADS = new IntegerConfigKey(
+            "server.nettyThreads",
+            List.of(KeyType.CONFIG),
+            0);
 
     /**
      * Address for uploading aggregated anonymous usage statistics. Uploaded information is the same you can see on the
@@ -340,6 +372,13 @@ public final class Keys {
             "fuelIncreaseThreshold",
             List.of(KeyType.SERVER, KeyType.DEVICE),
             0.0);
+
+    /**
+     * Device fuel tank capacity in liters.
+     */
+    public static final ConfigKey<String> FUEL_CAPACITY = new StringConfigKey(
+            "fuelCapacity",
+            List.of(KeyType.DEVICE));
 
     /**
      * Speed limit value in knots.
@@ -402,29 +441,12 @@ public final class Keys {
             true);
 
     /**
-     * If set to true, invalid positions will be considered for motion logic.
-     */
-    public static final ConfigKey<Boolean> EVENT_MOTION_PROCESS_INVALID_POSITIONS = new BooleanConfigKey(
-            "event.motion.processInvalidPositions",
-            List.of(KeyType.CONFIG, KeyType.DEVICE),
-            false);
-
-    /**
      * If the speed is above specified value, the object is considered to be in motion. Default value is 0.01 knots.
      */
     public static final ConfigKey<Double> EVENT_MOTION_SPEED_THRESHOLD = new DoubleConfigKey(
             "event.motion.speedThreshold",
             List.of(KeyType.CONFIG, KeyType.DEVICE),
             0.01);
-
-    /**
-     * Global polyline geofence distance. Within that distance from the polyline, point is considered within the
-     * geofence. Each individual geofence can also has 'polylineDistance' attribute which will take precedence.
-     */
-    public static final ConfigKey<Double> GEOFENCE_POLYLINE_DISTANCE = new DoubleConfigKey(
-            "geofence.polylineDistance",
-            List.of(KeyType.CONFIG),
-            25.0);
 
     /**
      * Enable in-memory database instead of an SQL database.
@@ -638,6 +660,14 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * List of OpenID Connect clients for the built-in provider.
+     * Value should be a comma-separated list of 'clientId:clientSecret' pairs.
+     */
+    public static final ConfigKey<String> OPENID_CLIENTS = new StringConfigKey(
+            "openid.clients",
+            List.of(KeyType.CONFIG));
+
+    /**
      * Force OpenID Connect authentication. When enabled, the Traccar login page will be skipped
      * and users are redirected to the OpenID Connect provider.
      */
@@ -769,21 +799,6 @@ public final class Keys {
             8082);
 
     /**
-     * Maximum API requests per second. Above this limit requests and delayed and throttled.
-     */
-    public static final ConfigKey<Integer> WEB_MAX_REQUESTS_PER_SECOND = new IntegerConfigKey(
-            "web.maxRequestsPerSec",
-            List.of(KeyType.CONFIG));
-
-    /**
-     * Maximum API request duration in seconds.
-     */
-    public static final ConfigKey<Integer> WEB_MAX_REQUEST_SECONDS = new IntegerConfigKey(
-            "web.maxRequestSec",
-            List.of(KeyType.CONFIG),
-            600);
-
-    /**
      * Path to the web app folder.
      */
     public static final ConfigKey<String> WEB_PATH = new StringConfigKey(
@@ -845,12 +860,20 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
-     * Cache control header value. By default resources are cached for one hour.
+     * Cache control header value. By default, resources are cached for one hour.
      */
     public static final ConfigKey<String> WEB_CACHE_CONTROL = new StringConfigKey(
             "web.cacheControl",
             List.of(KeyType.CONFIG),
             "max-age=3600,public");
+
+    /**
+     * Path to localization files.
+     */
+    public static final ConfigKey<String> WEB_LOCALIZATION_PATH = new StringConfigKey(
+            "web.localizationPath",
+            List.of(KeyType.CONFIG),
+            "./templates/translations");
 
     /**
      * Enable TOTP authentication on the server.
@@ -1175,6 +1198,35 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
+     * Command sender type for the device. This overrides standard data or text commands with an API-based commands.
+     * For example, it can be Traccar Client push commands.
+     */
+    public static final ConfigKey<String> COMMAND_SENDER = new StringConfigKey(
+            "command.sender",
+            List.of(KeyType.DEVICE));
+
+    /**
+     * Firebase service account JSON for push commands.
+     */
+    public static final ConfigKey<String> COMMAND_CLIENT_SERVICE_ACCOUNT = new StringConfigKey(
+            "command.client.serviceAccount",
+            List.of(KeyType.CONFIG));
+
+    /**
+     * Google Find Hub service URL.
+     */
+    public static final ConfigKey<String> COMMAND_FIND_HUB_URL = new StringConfigKey(
+            "command.findHub.url",
+            List.of(KeyType.DEVICE));
+
+    /**
+     * Google Find Hub service API key.
+     */
+    public static final ConfigKey<String> COMMAND_FIND_HUB_KEY = new StringConfigKey(
+            "command.findHub.key",
+            List.of(KeyType.DEVICE));
+
+    /**
      * Enabled notification options. Comma-separated string is expected.
      * Example: web,mail,sms
      */
@@ -1200,7 +1252,7 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
-     * Firebase service account JSON.
+     * Firebase service account JSON for push notifications.
      */
     public static final ConfigKey<String> NOTIFICATOR_FIREBASE_SERVICE_ACCOUNT = new StringConfigKey(
             "notificator.firebase.serviceAccount",
@@ -1534,8 +1586,7 @@ public final class Keys {
             List.of(KeyType.CONFIG));
 
     /**
-     * Distance in meters. Distances above this value gets handled like explained in 'coordinates.filter', but only if
-     * Position is also marked as 'invalid'.
+     * Distance in meters. Distances above this value gets handled like explained in 'coordinates.filter'.
      */
     public static final ConfigKey<Integer> COORDINATES_MAX_ERROR = new IntegerConfigKey(
             "coordinates.maxError",
@@ -1666,13 +1717,6 @@ public final class Keys {
             "geocoder.ignorePositions",
             List.of(KeyType.CONFIG),
             true);
-
-    /**
-     * Boolean flag to apply reverse geocoding to invalid positions.
-     */
-    public static final ConfigKey<Boolean> GEOCODER_PROCESS_INVALID_POSITIONS = new BooleanConfigKey(
-            "geocoder.processInvalidPositions",
-            List.of(KeyType.CONFIG));
 
     /**
      * Optional parameter to specify minimum distance for new reverse geocoding request. If distance is less than
@@ -1877,6 +1921,13 @@ public final class Keys {
      */
     public static final ConfigKey<Boolean> WEB_SHARE_DEVICE_REPORTS = new BooleanConfigKey(
             "web.shareDevice.reports",
+            List.of(KeyType.CONFIG));
+
+    /**
+     * Enable MCP service.
+     */
+    public static final ConfigKey<Boolean> WEB_MCP_ENABLE = new BooleanConfigKey(
+            "web.mcp.enable",
             List.of(KeyType.CONFIG));
 
     /**
