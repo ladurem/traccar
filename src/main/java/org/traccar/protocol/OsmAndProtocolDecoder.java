@@ -44,6 +44,7 @@ import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -114,17 +115,29 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                     case "v" -> position.setValid(value.equalsIgnoreCase("A"));
                     case "valid" -> position.setValid(Boolean.parseBoolean(value) || "1".equals(value));
                     case "timestamp" -> {
-                        try {
-                            long timestamp = Long.parseLong(value);
-                            if (timestamp < Integer.MAX_VALUE) {
-                                timestamp *= 1000;
+                        Date deviceTime = null;
+                        if (value.length() == 12) {
+                            try {
+                                deviceTime = DateUtil.parse(DEVICE_DATE_FORMAT, value);
+                            } catch (DateTimeParseException error) {
+                                deviceTime = null;
                             }
-                            position.setTime(new Date(timestamp));
-                        } catch (NumberFormatException error) {
-                            if (value.contains("T")) {
-                                position.setTime(DateUtil.parseDate(value));
-                            } else {
-                                position.setTime(DateUtil.parse(DATE_FORMAT, value));
+                        }
+                        if (deviceTime != null) {
+                            position.setTime(deviceTime);
+                        } else {
+                            try {
+                                long timestamp = Long.parseLong(value);
+                                if (timestamp < Integer.MAX_VALUE) {
+                                    timestamp *= 1000;
+                                }
+                                position.setTime(new Date(timestamp));
+                            } catch (NumberFormatException error) {
+                                if (value.contains("T")) {
+                                    position.setTime(DateUtil.parseDate(value));
+                                } else {
+                                    position.setTime(DateUtil.parse(DATE_FORMAT, value));
+                                }
                             }
                         }
                     }
@@ -162,7 +175,7 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                     case "driverUniqueId" -> position.set(Position.KEY_DRIVER_UNIQUE_ID, value);
                     case "charge" -> position.set(Position.KEY_CHARGE, Boolean.parseBoolean(value));
                     case "in", "input" -> position.set(Position.KEY_INPUT, value);
-                    case "sa", "sat" -> position.set(Position.KEY_SATELLITES, value);
+                    case "sa", "sat" -> position.set(Position.KEY_SATELLITES, Integer.parseInt(value));
                     default -> {
                         try {
                             position.set(entry.getKey(), Double.parseDouble(value));

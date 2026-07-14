@@ -32,6 +32,9 @@ public class OsmAndProtocolDecoderTest extends ProtocolTest {
 
         var decoder = inject(new OsmAndProtocolDecoder(null));
 
+        verifyPosition(decoder, request(
+                "/?v=A&timestamp=140726151549&id=VTP351&speed=0.029&lon=-0.585563&lat=44.801589&hdop=0.67&altitude=29.1&input=000&LC=10&sat=12&bearing=0.00&ainput=3194578563163792"));
+
         verifyNotNull(decoder, request(
                 "/?id=123456&timestamp=1377177267&cell=257,02,16,2224&cell=257,02,16,2223,-90&wifi=00-14-22-01-23-45,-80&wifi=00-1C-B3-09-85-15,-70"));
 
