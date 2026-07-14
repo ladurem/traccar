@@ -1,0 +1,61 @@
+CONFIGURATION GENLOC 341e - VPSP353
+Contact/allumage cable sur input 1 = input 0 (APC) (alimentation permanente)
+LOCLOP=1,600 deja actif : veille profonde (GSM+GPS+serie coupes) 600s (10min)
+apres coupure du contact. Reveil sur contact actif OU LOCKAS.
+====================================================================
+
+MODE SERIE / TCP (liaison directe ou commande Custom Traccar) : pas de mot de
+passe requis (l'acces est AUTHORIZED par defaut sur ces deux canaux, contrairement
+au SMS). Une commande AT par ligne.
+
+
+--- 0. (Recommande, optionnel) Changer le mot de passe SMS par defaut ---
+Le mot de passe "0000" est le defaut usine documente : n'importe qui connaissant
+le numero de la carte SIM peut reconfigurer le boitier par SMS avec ce mdp (changer
+LOCTSV, tout effacer via "ERASE", etc). A changer une fois, 8 caracteres max,
+sensible a la casse. NE PAS committer le vrai mot de passe choisi dans ce fichier.
+AT+LOCPSW="0000","<NOUVEAU_MDP>"
+
+
+--- 1. APN ---
+AT+LOCASV="sl2sfr","",""
+
+
+--- 2. Identifiant + serveur ---
+AT+LOCIDT="VPSP353"
+AT+LOCTSV="gps.protectionciviletalence.fr",5055
+
+
+--- 3. Format de trame ---
+AT+LOCSTK=0
+AT+LOCFRT=2,"ID","ST","FX","TM","LT","LI","LG","LU","NS","HD","AL","CS","SK"
+AT+LOCFRTX=2,"IP","AN","DI","LC","DT"
+AT+LOCTPH="GET /?v=%s&timestamp=%d%t&id=%i&speed=%k&lon=%x&lat=%y&hdop=%h&altitude=%l&input=%p&LC=%r&sat=%n&bearing=%c&ainput=%b&fix=%f&odometer=%v HTTP/1.1\\r\\nHost: gps.protectionciviletalence.fr:5055\\r\\n\\r\\n","H"
+
+
+--- 4. Mode d'acquisition/envoi ---
+AT+LOCSND=2,"I","00:00"
+AT+LOCSTK=2,"000006"
+AT+LOCSTK1=1,0,"00:01:00"
+AT+LOCKAS=1
+
+Note : LOCSTK=2 -> logging permanent 6s UNIQUEMENT quand l'input contact (input 1)
+est actif. A l'arret contact coupe : silence, puis apres 600s LOCLOP endort le
+boitier (GSM+GPS+serie off) en fermant proprement la connexion TCP lui-meme.
+
+Pas de LOCKAL ici : sa fenetre de declenchement (20 min) est plus longue que le
+delai LOCLOP (10 min) - la connexion n'est jamais inactive assez longtemps pour
+que LOCKAL ou le risque de coupure silencieuse operateur (~30 min) surviennent.
+LOCLOP ferme la connexion avant. LOCKAL est donc inutile sur ce boitier
+specifiquement (utile en revanche sur VTP351/VTU352, qui n'ont pas de LOCLOP).
+
+LOCKAS=1 : reveille le boitier ENDORMI (LOCLOP) toutes les 1440 min (24h,
+valeur par defaut) pour enregistrer et envoyer une trame de presence.
+on
+
+--- Verification (optionnel) ---
+AT+LOCIDT?
+AT+LOCTPH?
+AT+LOCSTK?
+AT+LOCLOP?
+AT+LOCKAS?
