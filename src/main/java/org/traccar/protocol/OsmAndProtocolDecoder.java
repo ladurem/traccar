@@ -79,6 +79,64 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
         }
     }
 
+    private static String translateLoggingCode(int code) {
+        return switch (code) {
+            case 0x01 -> "Réinitialisation quotidienne";
+            case 0x08 -> "Redémarrage après échec d'accusé de réception";
+            case 0x09 -> "Redémarrage après adresse IP invalide";
+            case 0x10 -> "Cyclique";
+            case 0x11 -> "Keep alive";
+            case 0x12 -> "Manuel (LOCSTK)";
+            case 0x13 -> "Distant (SENDPOSI)";
+            case 0x51 -> "Capture UART";
+            case 0x58 -> "Précharge en cours";
+            case 0x59 -> "Charge rapide en cours";
+            case 0x5A -> "Charge terminée";
+            case 0x5B -> "Charge suspendue";
+            case 0x5C -> "Défaut batterie";
+            case 0x5D -> "Batterie faible";
+            case 0x5E -> "Alimentation externe coupée";
+            case 0x5F -> "Alimentation externe branchée";
+            case 0x60 -> "iButton One-Wire retiré";
+            case 0x61 -> "iButton One-Wire détecté";
+            case 0x80 -> "Mouvement arrêté";
+            case 0x84 -> "Mouvement démarré";
+            case 0x8A -> "Choc détecté";
+            case 0x90 -> "Changement de cap";
+            case 0x91 -> "Dépassement du seuil de vitesse basse";
+            case 0x92 -> "Distance minimale atteinte";
+            case 0xE0 -> "Éco-conduite : évaluation impossible";
+            case 0xE1 -> "Éco-conduite : évaluation possible";
+            case 0xE2 -> "Éco-conduite : freinage excessif";
+            case 0xE3 -> "Éco-conduite : accélération excessive";
+            case 0xE4 -> "Éco-conduite : virage excessif";
+            case 0xFF -> "Inconnu";
+            default -> {
+                if (code >= 0x21 && code <= 0x28) {
+                    yield "Entrée GPIO " + (code - 0x21 + 1);
+                } else if (code >= 0x2A && code <= 0x2D) {
+                    yield "Entrée analogique " + (code - 0x2A + 1);
+                } else if (code >= 0xA0 && code <= 0xBD) {
+                    yield "Sortie de la zone géographique " + (code - 0xA0);
+                } else if (code >= 0xC0 && code <= 0xDD) {
+                    yield "Entrée dans la zone géographique " + (code - 0xC0);
+                } else {
+                    yield null;
+                }
+            }
+        };
+    }
+
+    private static String translateLoggingCodeAlarm(int code) {
+        return switch (code) {
+            case 0x5C -> Position.ALARM_FAULT;
+            case 0x5D -> Position.ALARM_LOW_BATTERY;
+            case 0x5E -> Position.ALARM_POWER_CUT;
+            case 0x5F -> Position.ALARM_POWER_RESTORED;
+            default -> null;
+        };
+    }
+
     private Object decodeQuery(
             Channel channel, SocketAddress remoteAddress, FullHttpRequest request) throws Exception {
 
@@ -98,6 +156,9 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
 
         for (Map.Entry<String, List<String>> entry : params.entrySet()) {
             for (String value : entry.getValue()) {
+                if (value.isEmpty()) {
+                    continue;
+                }
                 switch (entry.getKey()) {
                     case "id", "i", "deviceid" -> {
                         DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, value);
@@ -166,7 +227,7 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                         network.addWifiAccessPoint(WifiAccessPoint.from(
                                 wifi[0].replace('-', ':'), Integer.parseInt(wifi[1])));
                     }
-                    case "speed", "s" -> position.setSpeed(convertSpeed(Double.parseDouble(value), "kn"));
+                    case "speed", "s" -> position.setSpeed(convertSpeed(Double.parseDouble(value), "kmh"));
                     case "bearing", "heading" -> position.setCourse(Double.parseDouble(value));
                     case "altitude", "al" -> position.setAltitude(Double.parseDouble(value));
                     case "accuracy", "p", "prec" -> position.setAccuracy(Double.parseDouble(value));
@@ -176,6 +237,30 @@ public class OsmAndProtocolDecoder extends BaseHttpProtocolDecoder {
                     case "charge" -> position.set(Position.KEY_CHARGE, Boolean.parseBoolean(value));
                     case "in", "input" -> position.set(Position.KEY_INPUT, value);
                     case "sa", "sat" -> position.set(Position.KEY_SATELLITES, Integer.parseInt(value));
+                    case "LC" -> {
+                        position.set("lc", value);
+                        try {
+                            int code = Integer.parseInt(value, 16);
+                            String description = translateLoggingCode(code);
+                            if (description != null) {
+                                position.set("lcDescription", description);
+                            }
+                            position.addAlarm(translateLoggingCodeAlarm(code));
+                        } catch (NumberFormatException error) {
+                            // ignore unparsable logging code
+                        }
+                    }
+                    case "ainput" -> {
+                        if (value.length() == 16) {
+                            position.set("antennaVoltage", Integer.parseInt(value.substring(0, 4)));
+                            position.set("analogInput1", Integer.parseInt(value.substring(4, 8)));
+                            position.set("analogInput2", Integer.parseInt(value.substring(8, 12)));
+                            position.set(Position.KEY_BATTERY, Integer.parseInt(value.substring(12, 16)) * 0.001);
+                        } else {
+                            position.set(entry.getKey(), value);
+                        }
+                    }
+                    case "odometer" -> position.set(Position.KEY_ODOMETER, Double.parseDouble(value) * 1000);
                     default -> {
                         try {
                             position.set(entry.getKey(), Double.parseDouble(value));

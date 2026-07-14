@@ -35,6 +35,41 @@ public class OsmAndProtocolDecoderTest extends ProtocolTest {
         verifyPosition(decoder, request(
                 "/?v=A&timestamp=140726151549&id=VTP351&speed=0.029&lon=-0.585563&lat=44.801589&hdop=0.67&altitude=29.1&input=000&LC=10&sat=12&bearing=0.00&ainput=3194578563163792"));
 
+        verifyPosition(decoder, request(
+                "/?v=V&timestamp=140726163918&id=VTP351&speed=&lon=0.000000&lat=0.000000&hdop=&altitude=&input=000&LC=5F&sat=&bearing=&ainput=3194529355493792"));
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=10&sat=12&bearing=232.01&ainput=3187552059233792"),
+                "speed", 58.327235054000006);
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5F&sat=12&bearing=232.01&ainput=3187552059233792&odometer=1279.48"),
+                "lc", "5F");
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5F&sat=12&bearing=232.01&ainput=3187552059233792&odometer=1279.48"),
+                "lcDescription", "Alimentation externe branchée");
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5F&sat=12&bearing=232.01&ainput=3187552059233792&odometer=1279.48"),
+                "antennaVoltage", 3187);
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5F&sat=12&bearing=232.01&ainput=3187552059233792&odometer=1279.48"),
+                "battery", 3.7920000000000003);
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5F&sat=12&bearing=232.01&ainput=3187552059233792&odometer=1279.48"),
+                "odometer", 1279480.0);
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5F&sat=12&bearing=232.01&ainput=3187552059233792&odometer=1279.48"),
+                "alarm", "powerRestored");
+
+        verifyAttribute(decoder, request(
+                "/?v=A&timestamp=140726154901&id=VTP351&speed=108.022&lon=-0.669835&lat=44.766616&hdop=0.70&altitude=55.4&input=000&LC=5D&sat=12&bearing=232.01&ainput=3187552059233792"),
+                "alarm", "lowBattery");
+
         verifyNotNull(decoder, request(
                 "/?id=123456&timestamp=1377177267&cell=257,02,16,2224&cell=257,02,16,2223,-90&wifi=00-14-22-01-23-45,-80&wifi=00-1C-B3-09-85-15,-70"));
 
